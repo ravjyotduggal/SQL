@@ -1,6 +1,6 @@
 --********************* Deleting rows with Partition By *******************************
 
-DELETE X from ( SELECT *, rn=Row_number() OVER (partition BY [Column1],[Column2 ORDER BY  [Column1],[Column2,[START DATE] DESC ) FROM [Table Name]) x x WHERE rn>1
+DELETE X from ( SELECT *, rn=Row_number() OVER (partition BY [Column1],[Column2] ORDER BY  [Column1],[Column2],[START DATE] DESC ) FROM [Table Name]) x WHERE rn>1
 
 --********************* Deleting rows with Partition By *******************************
 
