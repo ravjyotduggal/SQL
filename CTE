@@ -1,0 +1,17 @@
+with cte1 as (
+select distinct [organizational unit name],[Cost center],[Level 2 Text], DENSE_RANK()
+over (partition by [organizational unit name] order by [Cost center] desc ) as 'CC_Rank' from T_HRMS_DAILY),
+cte3 as (select * from cte1 where CC_Rank=1),
+cte2 as (
+select distinct A.[Job Req ID],CONCAT(A.[First Name:],' ',A.[Last Name:]) as 'Full Name',A.[Offer accepted],a.[Application Status],b.[job title], b.[Functional Area],
+Concat('Job Stage ', Right(b.[Job Stage],1)) as 'Job Stage',
+CONCAT(b.[Hiring Manager First Name],' ',b.[Hiring Manager Last Name]) as 'Manager Full Name',left(b.[Organizational Unit],CHARINDEX('-',b.[Organizational Unit],1)-1) as 'Organizational unit name', c.[cost center]
+from innowin4241.TA.dbo.T_GRT_Candidate_Data A
+left join innowin4241.TA.dbo.TEMP_GRT_REQ_Requisition_Status_All b
+on a.[Job Req ID] = b.[Job Req ID]
+left join
+cte3 c
+on left(b.[Organizational Unit],CHARINDEX('-',b.[Organizational Unit],1)-1) = c.[organizational unit name]
+where A.[application status] = 'offer accepted'
+and A.[FY] = '2021'
+and C.[Level 2 Text] = 'GFPL People Services')
