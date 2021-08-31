@@ -1,0 +1,135 @@
+DECLARE @ADMIN VARCHAR(100) 
+DECLARE @NAME VARCHAR(100)    
+DECLARE @EMAILID VARCHAR(100) 
+DECLARE @MMAILID VARCHAR(100)
+DECLARE @file2 VARCHAR(MAX) = '\\Server_Name\data\Images\ld_header.PNG'
+DECLARE @file3 VARCHAR(MAX) = ';\\Server_Name\data\Images\ld_footer.PNG'
+DECLARE @filenames VARCHAR(MAX) = @file2 + @file3
+DECLARE @tablebody VARCHAR(MAX)
+SET @ADMIN ='admin@abc.com'
+SET @EMAILID = 'person1@abc.com'
+DECLARE @CONCHECK INT
+DECLARE @COUNT  INT 
+
+select @CONCHECK= count(*)  from T_LMS_REGISTRATION_EMAIL
+where upper([Status]) = 'PENDING'
+and [First_EMAIL_TO_MANAGER] is null
+and upper([Seats_available]) <> 'FULL'
+and ( [ENRL_CUT_DTE] is null or YEAR([ENRL_CUT_DTE]) = '1899' or cast(cast([ENRL_CUT_DTE] as date) as datetime) >cast(cast(getdate() as date) as datetime))
+and DATEDIFF(day,cast(cast(SYSDATETIME() as date) as datetime),cast(cast([START_DT] as date) as datetime))>7
+and DATEDIFF(day,cast(cast([Record_entry_Date] as date) as datetime),cast(cast(SYSDATETIME() as date) as datetime))>2
+
+IF (@CONCHECK >=1)
+BEGIN
+
+SELECT @COUNT =  MAX([RNK]) from (select [MANAGER_NAME], [MANAGER_EMAIL],[STUD_Name], [COurse TITLE], [START_DT]
+, DENSE_RANK() over (order by [MANAGER_EMAIL]) as "RNK" from [HRGO_LD_REPORTING].[dbo].[T_LMS_REGISTRATION_EMAIL]
+where upper([Status]) = 'PENDING'
+and [First_EMAIL_TO_MANAGER] is null
+and upper([Seats_available]) <> 'FULL'
+and ( [ENRL_CUT_DTE] is null or YEAR([ENRL_CUT_DTE]) = '1899' or cast(cast([ENRL_CUT_DTE] as date) as datetime) >cast(cast(getdate() as date) as datetime))
+and DATEDIFF(day,cast(cast(SYSDATETIME() as date) as datetime),cast(cast([START_DT] as date) as datetime))>7
+and DATEDIFF(day,cast(cast([Record_entry_Date] as date) as datetime),cast(cast(SYSDATETIME() as date) as datetime))>2
+) VW
+
+DECLARE @I INT 
+    SET @I = 1
+       
+WHILE (@I <= @COUNT) 
+       BEGIN   
+       SELECT @NAME= [MANAGER_NAME] from (select DISTINCT [MANAGER_NAME],
+DENSE_RANK() over (order by [MANAGER_EMAIL]) as "RNK" from [HRGO_LD_REPORTING].[dbo].[T_LMS_REGISTRATION_EMAIL]
+where upper([Status]) = 'PENDING'
+and [First_EMAIL_TO_MANAGER] is null
+and upper([Seats_available]) <> 'FULL'
+and ( [ENRL_CUT_DTE] is null or YEAR([ENRL_CUT_DTE]) = '1899' or cast(cast([ENRL_CUT_DTE] as date) as datetime) >cast(cast(getdate() as date) as datetime))
+and DATEDIFF(day,cast(cast([Record_entry_Date] as date) as datetime),cast(cast(SYSDATETIME() as date) as datetime))>2
+and DATEDIFF(day,cast(cast(SYSDATETIME() as date) as datetime),cast(cast([START_DT] as date) as datetime))>7) VW
+       WHERE VW.[RNK]=@I
+
+
+       SELECT @MMAILID= [MANAGER_EMAIL] from (select DISTINCT [MANAGER_EMAIL],
+DENSE_RANK() over (order by [MANAGER_EMAIL]) as "RNK" from [HRGO_LD_REPORTING].[dbo].[T_LMS_REGISTRATION_EMAIL]
+where upper([Status]) = 'PENDING'
+and [First_EMAIL_TO_MANAGER] is null
+and upper([Seats_available]) <> 'FULL'
+and ( [ENRL_CUT_DTE] is null or YEAR([ENRL_CUT_DTE]) = '1899' or cast(cast([ENRL_CUT_DTE] as date) as datetime)>cast(cast(getdate() as date) as datetime))
+and DATEDIFF(day,cast(cast([Record_entry_Date] as date) as datetime),cast(cast(SYSDATETIME() as date) as datetime))>2
+and DATEDIFF(day,cast(cast(SYSDATETIME() as date) as datetime),cast(cast([START_DT] as date) as datetime))>7) VW
+       WHERE VW.[RNK]=@I
+
+
+       SET @tablebody= cast(( SELECT DISTINCT [STUD_Name] as 'td','', [COurse TITLE] as 'td','', substring(cast([START_DT]as varchar(30)),1,11) as 'td','', Substring(cast([END_DT]as varchar(30)),1,11) as 'td','',[Location] as 'td'
+       from (select [MANAGER_NAME], [MANAGER_EMAIL],[STUD_Name], [COurse TITLE], [START_DT], [END_DT], [Location],[Cost]
+       , DENSE_RANK() over (order by [MANAGER_EMAIL]) as "RNK" from [HRGO_LD_REPORTING].[dbo].[T_LMS_REGISTRATION_EMAIL]
+where upper([Status]) = 'PENDING'
+and [First_EMAIL_TO_MANAGER] is null
+and upper([Seats_available]) <> 'FULL'
+and ( [ENRL_CUT_DTE] is null or YEAR([ENRL_CUT_DTE]) = '1899' or cast(cast([ENRL_CUT_DTE] as date) as datetime) >cast(cast(getdate() as date) as datetime))
+and DATEDIFF(day,cast(cast([Record_entry_Date] as date) as datetime),cast(cast(SYSDATETIME() as date) as datetime))>2
+and DATEDIFF(day,cast(cast(SYSDATETIME() as date) as datetime),cast(cast([START_DT] as date) as datetime))>7) VW
+       WHERE VW.[RNK] = @I
+       FOR XML PATH('tr'), ELEMENTS) AS VARCHAR(MAX))
+
+       DECLARE @tableHTML  NVARCHAR(MAX);
+       SET QUOTED_IDENTIFIER OFF;
+       SET @tableHTML =
+       '<HTML>
+       <body>
+       <table width="100%" cellpadding="10" cellspacing="15" bgcolor="#dcdcdc"/>
+       <TR>
+       <TD>
+                                <table width=650 border="0" cellspacing="0" cellpadding="0" bgcolor="#ffffff" align="center"/>
+                                           <TR>
+                                           <TD><img src="cid:ld_header.PNG" width=650 /></td>
+                                           </tr>
+                                           <TR>
+                                                     <td height ="20" width=650 align="left" valign="top"/> </td>
+                                           </tr>
+                                           <TR>
+                                           <TD>
+                                                     <table width=650 border="0" cellspacing="0" cellpadding="15" bgcolor="#ffffff" align="left" valign="top">
+                                                     <tr>
+                                                     <td width=200 border="0" valign="Top" cellpadding="0" style="font-family:'+char(39)+'Ericsson Hilda Light'+char(39)+', Verdana,Geneva, sans-serif;font-size:22;color:#000000;text-align:Left; text-valign:top;"/>Dear <b>'+@NAME+'</b>,
+                                                             </td>
+                                                     </tr>
+                                                     <td width=450 border="0" style="font-family:'+char(39)+'Ericsson Hilda Light'+char(39)+', Verdana,Geneva, sans-serif;font-size:14;color:#000000;text-align:Left;text-valign:top;"/>
+                                                     Your team member/s is/are engaging in a training/s. However, securing seat for this engagement require your approval in ITM. May you please approve this in ITM at the soonest before the seats are occupied. Team member and
+                                                             the respective training pending approval are mentioned below:  <p>
+                                                             <br/>
+                                                             <table width=600 border="1" align="center" cellpadding="0" cellspacing="0" style="color:black;text-align:center;">
+                                                                 <tr>
+                                                                 <th>Employee Name</th>
+                                                                 <th>Training Name</th>
+                                                                 <th>Start Date</th>
+																 <th>End Date</th>
+																 <th>Location</th>
+                                                                 </tr>'
+                                                          
+       SET @tableHTML=@tableHTML+@tablebody+'</table>
+												<p><span style="color: rgb(0, 130, 240);">Note:</span> The employee will be enrolled as waitlisted if seats get filled before your approval. Fresh registration to the next available session will be required to be done by employee.</p>
+                                                             <br>
+															 Training cost is visible on approval section in ITM.</br>
+															 <br>
+                                                             Please follow the <a href="www.google.com">link</a> to approve. <P>
+                                                     <a href="www.google.com">Quick Reference guide</a> for approving trainings in ITM.  <br/><BR/>
+                                                     Best regards,  <br/>
+                                                     Learning & Development Team <br/><br/>
+                                                     </td>
+                                                     </table></td></tr>
+                                           <TR><td height ="20" width=650 align="center" valign="top" style="font-family:'+char(39)+'Ericsson Hilda Light'+char(39)+', Verdana,Geneva, sans-serif;font-size:10;color:#000000;text-align:center;text-valign:top;"><br/>[THIS IS AN AUTOMATED MESSAGE - PLEASE DO NOT REPLY DIRECTLY TO THIS EMAIL]</td>
+                                           </tr><TR><TD><img src="cid:ld_footer.PNG" width=650 align="center"/></td></tr></td>
+       </tr></table></BODY></HTML>'
+
+       SET QUOTED_IDENTIFIER ON;
+       EXEC msdb.dbo.sp_send_dbmail
+              @profile_name = 'HR Sweden',
+              @recipients = @MMAILID,
+			  @blind_copy_recipients ='abc@gmail.com',
+              @subject = 'Action: Approve pending learning in ITM',
+              @body = @tableHTML,
+              @body_format='HTML'
+              ,@file_attachments = @filenames
+              SELECT @I = @I + 1 
+       END
+END
