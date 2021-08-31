@@ -1,0 +1,15 @@
+--******************** Role Based Permissions ************************
+
+with cte as (
+SELECT [cost center],  
+access=STUFF  
+(  
+    (  
+      SELECT DISTINCT ', '+ CAST(g.email AS VARCHAR(MAX))  
+      FROM T_HRMS_GFPLPS_HCTOOL_Access g,T_HRMS_GFPLPS_HCTOOL e   
+      WHERE g.[cost center]=e.[cost center] and e.[cost center]=t1.[cost center]   
+      FOR XMl PATH('')  
+    ),1,1,''  
+)  
+FROM T_HRMS_GFPLPS_HCTOOL t1  
+GROUP BY [cost center] )
