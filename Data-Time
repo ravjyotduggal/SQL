@@ -1,0 +1,6 @@
+Link:- https://www.mssqltips.com/sqlservertip/1145/date-and-time-conversions-using-sql-server/
+
+****************** Date Conversion **************************
+
+update [Database_Name]..Table_Name
+set [Start date] = convert(varchar(10),CONVERT(date,[Start date],103),101)
